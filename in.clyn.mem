@@ -1,0 +1,43 @@
+# FENE beadspring benchmark
+
+variable	x index 1
+variable	y index 1
+variable	z index 1
+
+boundary	f f f
+lattice		none 1.0
+units		lj
+
+neighbor	0.4 bin
+neigh_modify	every 1 delay 1
+
+atom_style	angle
+#atom_modify	map array sort 100 2.0
+
+newton		off
+
+read_data	data.membrane
+
+replicate	$x $y $z
+
+#Gaussian Chain
+bond_style     harmonic	
+bond_coeff     1 100.0 1.5
+
+pair_style 	lj/cut 2.5
+pair_coeff	1 1 0.1 1.0 1.0
+
+group		mem type 1
+
+fix		1 mem nve
+fix		2 mem rigid single
+fix		3 mem langevin 1.0 1.0 1.0 904297
+fix		4 mem setforce NULL 0.0 0.0
+
+thermo          10
+timestep	0.012
+
+dump		0 all custom 1 mem.lammpstrj id type x y z vx vy vz
+
+run		1
+

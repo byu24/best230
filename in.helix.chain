@@ -1,0 +1,57 @@
+# FENE beadspring benchmark
+
+variable	x index 1
+variable	y index 1
+variable	z index 1
+
+#suffix		gpu
+#package 	gpu force 0 0 1.0
+
+boundary	f f f
+lattice		none 1.0
+units		lj
+
+neighbor	0.4 bin
+neigh_modify	every 1 delay 1
+
+atom_style	molecular #bond #charge #angle
+
+newton		off
+
+region		cyln1 cylinder z 0.0 0.0 5.0 -110.0 110.0 side in units box
+
+read_data	data.chain0
+
+replicate	$x $y $z
+
+#Gaussian Chain
+bond_style  hybrid harmonic fene	
+
+bond_coeff	1 fene 50.0 1.5 10.5 1.1
+bond_coeff	2 harmonic 500.0 0.5 
+
+angle_style	harmonic
+angle_coeff	1 500.0 90.0
+angle_coeff	2 500.0 45.0
+
+#pair_modify	shift yes
+pair_style 	lj/cut 2.5
+pair_coeff	1 1 0.1 1.0 1.0
+pair_coeff	2 2 1.1 1.0 1.0
+
+group		chain type 1
+group 		backbone type 2
+
+fix		1 all nve
+fix		2 all langevin 1.0 1.0 1.0 904297
+#fix		3 all indent 10.0 sphere 0.0 0.0 0.0 10.0 units box #side in
+fix		4 backbone wall/region cyln1 lj126 100.0 1.0 5.0
+#fix		4 backbone indent 50.0 cylinder z 0.0 0.0 10.0 side in units box
+#fix		5 backbone shake 0.001 20 100 t 2 m 100.0
+
+thermo          10
+timestep	0.0012
+
+dump		0 all custom 100 helix.lammpstrj id type x y z vx vy vz
+
+run		1000000
